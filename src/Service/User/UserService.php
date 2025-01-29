@@ -79,4 +79,20 @@ readonly class UserService
 
         return $this->userTransform->getInfo($user);
     }
+
+    /**
+     * @throws DMALException
+     * @throws ExceptionInterface
+     */
+    public function search(string $firstName, string $lastName): array
+    {
+        $users = $this->userRepository->search(mb_strtolower($firstName), mb_strtolower($lastName));
+        $data = [];
+
+        foreach ($users as $user) {
+            $data[] = $this->userTransform->getInfo($user);
+        }
+
+        return $data;
+    }
 }

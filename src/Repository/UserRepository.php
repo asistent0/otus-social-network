@@ -69,4 +69,24 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $array = $this->serializer->normalize($user, 'json');
         $this->connection->executeStatement($sql, $array);
     }
+
+    /**
+     * @return User[]
+     * @throws DBALException
+     * @throws ExceptionInterface
+     */
+    public function search(string $firstName, string $lastName): array
+    {
+        $sql = 'SELECT * FROM "user" WHERE LOWER(first_name) LIKE :firstName OR LOWER(last_name) LIKE :firstName';
+        $data = $this->connection->fetchAllAssociative($sql, [
+            'firstName' => $firstName.'%',
+            'lastName' => $lastName.'%'
+        ]);
+
+        if (!$data) {
+            return [];
+        }
+
+        return $this->serializer->denormalize($data, User::class.'[]');
+    }
 }

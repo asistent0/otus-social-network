@@ -68,4 +68,23 @@ class UserController extends AbstractController
             ], 400);
         }
     }
+
+    /**
+     * @throws ExceptionInterface
+     * @throws DBALException
+     */
+    #[Route('/user/search', name: 'user_search', methods: ['GET'])]
+    public function search(Request $request): JsonResponse
+    {
+        $firstName = $request->get('first_name', '');
+        $lastName = $request->get('last_name', '');
+
+        if (empty($firstName) && empty($lastName)) {
+            return $this->json([]);
+        }
+
+        $usersData = $this->userService->search($firstName, $lastName);
+
+        return $this->json($usersData);
+    }
 }
