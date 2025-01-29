@@ -3,16 +3,16 @@
 namespace App\Repository;
 
 use App\Entity\User;
-use App\Service\User\Gender;
-use App\Service\User\Role;
-use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * @extends ServiceEntityRepository<User>
@@ -23,13 +23,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     public function __construct(
         ManagerRegistry             $registry,
         private readonly Connection $connection,
+        private readonly DenormalizerInterface&NormalizerInterface $serializer
     ) {
         parent::__construct($registry, User::class);
     }
 
-    /**
-     * Used to upgrade (rehash) the user's password automatically over time.
-     */
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
     {
         if (!$user instanceof User) {
@@ -41,6 +39,10 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
+    /**
+     * @throws DBALException
+     * @throws ExceptionInterface
+     */
     public function findOneById(string $id): ?User
     {
         $sql = 'SELECT * FROM "user" WHERE id = :id';
@@ -50,43 +52,21 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             return null;
         }
 
-        $user = new User();
-        $user->setId(Uuid::fromString($data['id']));
-        $user->setRole(Role::from($data['role']));
-        $user->setPassword($data['password']);
-        $user->setFirstName($data['first_name']);
-        $user->setLastName($data['last_name']);
-        $user->setBirthDate(new DateTimeImmutable($data['birth_date']));
-        $user->setGender(Gender::from($data['gender']));
-
-        if ($data['biography'] !== null) {
-            $user->setBiography($data['biography']);
-        }
-
-        if ($data['city'] !== null) {
-            $user->setCity($data['city']);
-        }
-
-        return $user;
+        return $this->serializer->denormalize($data, User::class);
     }
 
+    /**
+     * @throws DBALException
+     * @throws ExceptionInterface
+     */
     public function save(User $user): void
     {
         $sql = '
             INSERT INTO "user" (id, role, password, first_name, last_name, birth_date, gender, biography, city)
-            VALUES (:id, :role, :password, :firstName, :lastName, :birthDate, :gender, :biography, :city)
+            VALUES (:id, :role, :password, :first_name, :last_name, :birth_date, :gender, :biography, :city)
         ';
 
-        $this->connection->executeStatement($sql, [
-            'id' => $user->getid()->toString(),
-            'role' => $user->getRole()->value,
-            'password' => $user->getPassword(),
-            'firstName' => $user->getFirstName(),
-            'lastName' => $user->getLastName(),
-            'birthDate' => $user->getBirthDate()->format('Y-m-d'),
-            'gender' => $user->getGender()->value,
-            'biography' => $user->getBiography(),
-            'city' => $user->getCity(),
-        ]);
+        $array = $this->serializer->normalize($user, 'json');
+        $this->connection->executeStatement($sql, $array);
     }
 }

@@ -5,9 +5,12 @@ namespace App\Service\User;
 use App\Entity\User;
 use App\Exception\UserNotFoundException;
 use App\Repository\UserRepository;
+use DateMalformedStringException;
 use DateTimeImmutable;
+use Doctrine\DBAL\Exception as DMALException;
 use InvalidArgumentException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 readonly class UserService
@@ -17,8 +20,14 @@ readonly class UserService
         private UserPasswordHasherInterface $passwordHasher,
         private ValidatorInterface          $validator,
         private UserRepository              $userRepository,
+        private UserTransform               $userTransform,
     ) {}
 
+    /**
+     * @throws DMALException
+     * @throws ExceptionInterface
+     * @throws DateMalformedStringException
+     */
     public function createUser(
         string $firstName,
         string $lastName,
@@ -56,6 +65,11 @@ readonly class UserService
         return $user;
     }
 
+    /**
+     * @throws DMALException
+     * @throws ExceptionInterface
+     * @throws UserNotFoundException
+     */
     public function getUser(string $id): array
     {
         $user = $this->userRepository->findOneById($id);
@@ -63,14 +77,6 @@ readonly class UserService
             throw new UserNotFoundException();
         }
 
-        return [
-            'id' => $user->getId(),
-            'first_name' => $user->getFirstName(),
-            'last_name' => $user->getLastName(),
-            'birth_date' => $user->getBirthDate()->format('Y-m-d'),
-            'gender' => $user->getGender()->value,
-            'biography' => $user->getBiography() ?: '',
-            'city' => $user->getCity() ?: '',
-        ];
+        return $this->userTransform->getInfo($user);
     }
 }

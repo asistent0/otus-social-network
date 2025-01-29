@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Exception as DBALException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,11 +11,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
 class AuthController extends AbstractController
 {
 
+    /**
+     * @throws DBALException
+     * @throws ExceptionInterface
+     */
     #[Route('/login', name: 'login', methods: ['POST'])]
     public function login(
         Request $request,

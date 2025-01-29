@@ -11,6 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Attribute\SerializedName;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -30,14 +33,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[SerializedName('first_name')]
     #[ORM\Column(name: 'first_name', length: 255)]
     #[Assert\NotBlank]
     private ?string $firstName = null;
 
+    #[SerializedName('last_name')]
     #[ORM\Column(name: 'last_name', length: 255)]
     #[Assert\NotBlank]
     private ?string $lastName = null;
 
+    #[Context(normalizationContext: [DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
+    #[SerializedName('birth_date')]
     #[ORM\Column(name: 'birth_date', type: Types::DATE_IMMUTABLE)]
     #[Assert\NotBlank]
     #[Assert\Type(DateTimeImmutable::class)]

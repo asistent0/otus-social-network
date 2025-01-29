@@ -4,11 +4,13 @@ namespace App\Controller;
 
 use App\Exception\UserNotFoundException;
 use App\Service\User\UserService;
+use Doctrine\DBAL\Exception as DBALException;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
 class UserController extends AbstractController
 {
@@ -17,6 +19,9 @@ class UserController extends AbstractController
         private readonly UserService $userService,
     ) {}
 
+    /**
+     * @throws ExceptionInterface
+     */
     #[Route('/user/register', name: 'user_register', methods: ['POST'])]
     public function register(Request $request): JsonResponse
     {
@@ -43,6 +48,9 @@ class UserController extends AbstractController
         }
     }
 
+    /**
+     * @throws ExceptionInterface
+     */
     #[Route('/user/get/{id}', name: 'user_get', methods: ['GET'])]
     public function get(string $id): JsonResponse
     {
