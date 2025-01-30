@@ -7,7 +7,7 @@
 3. Перейдите в каталог с репозиторием:
 4. Соберите и запустите контейнеры Docker с помощью Docker Compose:
 
-    ```bash
+    ```shell
     docker-compose up -d
     ```
 
@@ -35,3 +35,9 @@
    - /user/get/{id}
 
 Коллекция Postman находится в файле [SocialNetwork.postman_collection.json](SocialNetwork.postman_collection.json)
+
+## Загрузка пользователей
+
+   ```shell
+   docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append
+   ```

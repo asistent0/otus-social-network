@@ -27,7 +27,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private Uuid $id;
 
-    #[ORM\Column(type: 'string', length: 20, enumType: Role::class)]
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: Role::class)]
     private ?Role $role = null;
 
     #[ORM\Column]
@@ -43,14 +43,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank]
     private ?string $lastName = null;
 
-    #[Context(normalizationContext: [DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     #[SerializedName('birth_date')]
     #[ORM\Column(name: 'birth_date', type: Types::DATE_IMMUTABLE)]
     #[Assert\NotBlank]
     #[Assert\Type(DateTimeImmutable::class)]
     private ?DateTimeImmutable $birthDate = null;
 
-    #[ORM\Column(type: 'string', length: 1, enumType: Gender::class)]
+    #[ORM\Column(type: Types::STRING, length: 1, enumType: Gender::class)]
     private ?Gender $gender = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]

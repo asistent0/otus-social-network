@@ -2,19 +2,19 @@
 
 namespace App\Service\User;
 
-class UserTransform
-{
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
 
-    public static function getInfo($user): array
+readonly class UserTransform
+{
+    function __construct(
+        private SerializerInterface $serializer
+    ) {}
+
+    public function getInfo($user): array
     {
-        return [
-            'id' => $user->getId(),
-            'first_name' => $user->getFirstName(),
-            'last_name' => $user->getLastName(),
-            'birth_date' => $user->getBirthDate()->format('Y-m-d'),
-            'gender' => $user->getGender()->value,
-            'biography' => $user->getBiography() ?: '',
-            'city' => $user->getCity() ?: '',
-        ];
+        return $this->serializer->normalize($user, 'json', [
+            AbstractNormalizer::ATTRIBUTES => ['id', 'firstName', 'lastName', 'birthDate', 'gender', 'biography', 'city']
+        ]);
     }
 }

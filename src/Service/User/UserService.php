@@ -48,7 +48,8 @@ readonly class UserService
             ->setBirthDate(new DateTimeImmutable($birthDate))
             ->setGender($gender)
             ->setBiography($biography)
-            ->setCity($city)->setRole(Role::User);
+            ->setCity($city)
+            ->setRole(Role::User);
 
         $password = $this->passwordHasher->hashPassword($user, $password);
         $user->setPassword($password);
