@@ -20,7 +20,7 @@ class UserFixtures extends Fixture
     {
         $faker = Factory::create('ru_RU');
 
-        for ($i = 0; $i < 999_000; $i++) {
+        for ($i = 0; $i < 1_000_000; $i++) {
             $gender = $faker->randomElement([Gender::Male, Gender::Female]);
             $user = new User()
                 ->setFirstName($faker->firstName($gender->value === 'm' ? 'male' : 'female'))
@@ -41,6 +41,7 @@ class UserFixtures extends Fixture
             if ($i % 100 === 0) {
                 $manager->flush();
                 $manager->clear();
+                var_dump('flush');
             }
         }
 

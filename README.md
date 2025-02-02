@@ -39,5 +39,5 @@
 ## Загрузка пользователей
 
    ```shell
-   docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append
+   docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug
    ```

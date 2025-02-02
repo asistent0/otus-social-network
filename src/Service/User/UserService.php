@@ -87,7 +87,7 @@ readonly class UserService
      */
     public function search(string $firstName, string $lastName): array
     {
-        $users = $this->userRepository->search(mb_strtolower($firstName), mb_strtolower($lastName));
+        $users = $this->userRepository->search($firstName, $lastName);
         $data = [];
 
         foreach ($users as $user) {

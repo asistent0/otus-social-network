@@ -77,10 +77,10 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function search(string $firstName, string $lastName): array
     {
-        $sql = 'SELECT * FROM "user" WHERE LOWER(first_name) LIKE :firstName OR LOWER(last_name) LIKE :firstName ORDER BY id';
+        $sql = 'SELECT * FROM "user" WHERE LOWER(first_name) LIKE :firstName AND LOWER(last_name) LIKE :firstName ORDER BY id';
         $data = $this->connection->fetchAllAssociative($sql, [
-            'firstName' => $firstName.'%',
-            'lastName' => $lastName.'%'
+            'firstName' => mb_strtolower($firstName).'%',
+            'lastName' => mb_strtolower($lastName).'%'
         ]);
 
         if (!$data) {

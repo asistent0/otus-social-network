@@ -79,12 +79,20 @@ class UserController extends AbstractController
         $firstName = $request->get('first_name', '');
         $lastName = $request->get('last_name', '');
 
+        $result = [
+            'count' => 0,
+            'items' => [],
+        ];
+
         if (empty($firstName) && empty($lastName)) {
-            return $this->json([]);
+            return $this->json($result);
         }
 
         $usersData = $this->userService->search($firstName, $lastName);
 
-        return $this->json($usersData);
+        $result['count'] = count($usersData);
+        $result['items'] = $usersData;
+
+        return $this->json($result);
     }
 }
