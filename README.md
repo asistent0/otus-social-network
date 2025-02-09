@@ -33,6 +33,7 @@
    - /user/register
    - /login
    - /user/get/{id}
+   - /user/search/?first_name=Ек&last_name=Пе
 
 Коллекция Postman находится в файле [SocialNetwork.postman_collection.json](SocialNetwork.postman_collection.json)
 
@@ -41,3 +42,11 @@
    ```shell
    docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug
    ```
+
+## Тест производительности и настройки индексов
+
+В папке JMeter находятся все отчеты и настройки.
+
+## Тест производительности и репликации
+
+В папке JMeter2 находятся все отчеты и настройки.

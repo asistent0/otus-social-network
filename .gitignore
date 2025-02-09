@@ -1,6 +1,8 @@
 .git
 .idea
-/docker/postgresql/data/
+/docker/postgres-master/data/
+/docker/postgres-slave1/data/
+/docker/postgres-slave2/data/
 /docker/redis/data/
 
 # Cache, session files and log

@@ -97,6 +97,36 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://social-network.local/user/search?first_name=Jo&last_name=Do",
+							"protocol": "http",
+							"host": [
+								"social-network",
+								"local"
+							],
+							"path": [
+								"user",
+								"search"
+							],
+							"query": [
+								{
+									"key": "first_name",
+									"value": "Jo"
+								},
+								{
+									"key": "last_name",
+									"value": "Do"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
