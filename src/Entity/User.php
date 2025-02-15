@@ -3,9 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use App\Service\Friend\Status;
 use App\Service\User\Gender;
 use App\Service\User\Role;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -60,9 +63,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $city = null;
 
+    /**
+     * @var Collection<int, Friend>
+     */
+    #[ORM\OneToMany(targetEntity: Friend::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $friends;
+
+    /**
+     * @var Collection<int, Friend>
+     */
+    #[ORM\OneToMany(targetEntity: Friend::class, mappedBy: 'friend', orphanRemoval: true)]
+    private Collection $friendedBy;
+
+    /**
+     * @var Collection<int, Post>
+     */
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $posts;
+
     function __construct()
     {
         $this->id = Uuid::v7();
+        $this->friends = new ArrayCollection();
+        $this->friendedBy = new ArrayCollection();
+        $this->posts = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -203,6 +227,99 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCity(?string $city): static
     {
         $this->city = $city;
+
+        return $this;
+    }
+
+    public function getFriends(): Collection
+    {
+        return $this->friends;
+    }
+
+    public function addFriend(Friend $friend): static
+    {
+        if (!$this->friends->contains($friend)) {
+            $this->friends->add($friend);
+            $friend->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFriend(Friend $friend): static
+    {
+        $this->friends->removeElement($friend);
+
+        return $this;
+    }
+
+    public function getFriendedBy(): Collection
+    {
+        return $this->friendedBy;
+    }
+
+    public function addFriendedBy(Friend $friendedBy): static
+    {
+        if (!$this->friendedBy->contains($friendedBy)) {
+            $this->friendedBy->add($friendedBy);
+            $friendedBy->setFriend($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFriendedBy(Friend $friendedBy): static
+    {
+        $this->friendedBy->removeElement($friendedBy);
+
+        return $this;
+    }
+
+    public function getAcceptedFriends(): array
+    {
+        $friends = [];
+
+        foreach ($this->friends as $friendship) {
+            if ($friendship->getStatus() === Status::Accepted) {
+                $friends[] = $friendship->getFriend();
+            }
+        }
+
+        foreach ($this->friendedBy as $friendship) {
+            if ($friendship->getStatus() === Status::Accepted) {
+                $friends[] = $friendship->getUser();
+            }
+        }
+
+        return array_unique($friends);
+    }
+
+    /**
+     * @return Collection<int, Post>
+     */
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): static
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts->add($post);
+            $post->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removePost(Post $post): static
+    {
+        if ($this->posts->removeElement($post)) {
+            // set the owning side to null (unless already changed)
+            if ($post->getUser() === $this) {
+                $post->setUser(null);
+            }
+        }
 
         return $this;
     }

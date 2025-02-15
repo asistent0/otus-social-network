@@ -41,7 +41,7 @@ readonly class UserService
         if ($gender === null) {
             throw new InvalidArgumentException('Invalid gender value');
         }
-        // Создание нового пользователя
+
         $user = new User()
             ->setFirstName($firstName)
             ->setLastName($lastName)
@@ -54,13 +54,11 @@ readonly class UserService
         $password = $this->passwordHasher->hashPassword($user, $password);
         $user->setPassword($password);
 
-        // Валидация данных
         $errors = $this->validator->validate($user);
         if (count($errors) > 0) {
             throw new InvalidArgumentException((string) $errors);
         }
 
-        // Сохранение пользователя в базе данных
         $this->userRepository->save($user);
 
         return $user;
@@ -92,6 +90,22 @@ readonly class UserService
 
         foreach ($users as $user) {
             $data[] = $this->userTransform->getInfo($user);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @throws DMALException
+     * @throws ExceptionInterface
+     */
+    public function friends(User $user): array
+    {
+        $friends = $this->userRepository->getFriends($user);
+        $data = [];
+
+        foreach ($friends as $friend) {
+            $data[] = $this->userTransform->getInfo($friend);
         }
 
         return $data;

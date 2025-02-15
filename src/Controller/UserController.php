@@ -12,12 +12,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
-class UserController extends AbstractController
+final class UserController extends AbstractController
 {
-
     function __construct(
         private readonly UserService $userService,
-    ) {}
+    ) {
+    }
 
     /**
      * @throws ExceptionInterface

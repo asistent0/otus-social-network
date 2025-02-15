@@ -21,7 +21,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 {
 
     public function __construct(
-        ManagerRegistry             $registry,
+        ManagerRegistry $registry,
         private readonly Connection $connection,
         private readonly DenormalizerInterface&NormalizerInterface $serializer
     ) {
@@ -81,6 +81,25 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $data = $this->connection->fetchAllAssociative($sql, [
             'firstName' => mb_strtolower($firstName).'%',
             'lastName' => mb_strtolower($lastName).'%'
+        ]);
+
+        if (!$data) {
+            return [];
+        }
+
+        return $this->serializer->denormalize($data, User::class.'[]');
+    }
+
+    /**
+     * @return User[]
+     * @throws DBALException
+     * @throws ExceptionInterface
+     */
+    public function getFriends(User $user): array
+    {
+        $sql = 'SELECT "user".* FROM friend JOIN "user" ON "user".id = friend.friend_id WHERE friend.user_id = :id';
+        $data = $this->connection->fetchAllAssociative($sql, [
+            'id' => $user->getId(),
         ]);
 
         if (!$data) {

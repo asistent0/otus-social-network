@@ -11,7 +11,26 @@
 			"item": [
 				{
 					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Проверка успешного ответа\r",
+									"if (pm.response.code === 200) {\r",
+									"    const token = pm.response.json().token; // адаптируйте под структуру ответа\r",
+									"    pm.collectionVariables.set(\"jwt_token\", token); // ключевая строка!\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -24,11 +43,9 @@
 							}
 						},
 						"url": {
-							"raw": "http://social-network.local/login",
-							"protocol": "http",
+							"raw": "{{url}}/login",
 							"host": [
-								"social-network",
-								"local"
+								"{{url}}"
 							],
 							"path": [
 								"login"
@@ -57,11 +74,9 @@
 							}
 						},
 						"url": {
-							"raw": "http://social-network.local/user/register",
-							"protocol": "http",
+							"raw": "{{url}}/user/register",
 							"host": [
-								"social-network",
-								"local"
+								"{{url}}"
 							],
 							"path": [
 								"user",
@@ -77,11 +92,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://social-network.local/user/get/:id",
-							"protocol": "http",
+							"raw": "{{url}}/user/get/:id",
 							"host": [
-								"social-network",
-								"local"
+								"{{url}}"
 							],
 							"path": [
 								"user",
@@ -104,11 +117,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://social-network.local/user/search?first_name=Jo&last_name=Do",
-							"protocol": "http",
+							"raw": "{{url}}/user/search?first_name=Jo&last_name=Do",
 							"host": [
-								"social-network",
-								"local"
+								"{{url}}"
 							],
 							"path": [
 								"user",
@@ -129,6 +140,262 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Friend",
+			"item": [
+				{
+					"name": "Friend list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/friend/list",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"friend",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Friend set",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/friend/set/:user_id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"friend",
+								"set",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "0194b8e3-9fa3-77db-8b10-789b862b2304"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Friend delete",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/friend/delete/:user_id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"friend",
+								"delete",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "0194b8e3-9caf-760c-a55f-a5476b5d8d48"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Post",
+			"item": [
+				{
+					"name": "Post Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"text\": \"Вечернее небо, окрашенное в оттенки янтаря и лаванды, напоминает о хрупкости мгновений. Человек, идущий по берегу, оставляет следы на песке, которые волны стирают с легкостью, будто подчеркивая мимолетность существования. Деревья, шепчущие на ветру, хранят тайны столетий — их корни сплетены с историей земли, а листья тянутся к будущему. В этом танце времени технологии становятся мостом между прошлым и грядущим: солнечные панели汲取 энергию звезд, как древние растения поглощали свет, а алгоритмы учатся распознавать узоры, подобно тому, как мозг расшифровывает смысл в хаосе звуков. Но прогресс не отменяет необходимости прислушаться к шороху опавших листьев под ногами — возможно, в их шелесте скрыт ответ на вопрос, который мы еще не успели задать. Осознанность рождается в точке пересечения скорости и паузы, цифры и аналога, вечного цикла обновления и памяти о том, что каждое действие оставляет след, даже если его не видно глазу.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/post/create",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"post",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": \"01950df4-d923-79ef-b774-56ba0a708799\",\r\n    \"text\": \"Вечернее небо, окрашенное в оттенки янтаря и лаванды, напоминает о хрупкости мгновений. Человек, идущий по берегу, оставляет следы на песке, которые волны стирают с легкостью, будто подчеркивая мимолетность существования. Деревья, шепчущие на ветру, хранят тайны столетий — их корни сплетены с историей земли, а листья тянутся к будущему. В этом танце времени технологии становятся мостом между прошлым и грядущим: солнечные панели汲取 энергию звезд, как древние растения поглощали свет, а алгоритмы учатся распознавать узоры, подобно тому, как мозг расшифровывает смысл в хаосе звуков. Но прогресс не отменяет необходимости прислушаться к шороху опавших листьев под ногами — возможно, в их шелесте скрыт ответ на вопрос, который мы еще не успели задать. Осознанность рождается в точке пересечения скорости и паузы, цифры и аналога, вечного цикла обновления и памяти о том, что каждое действие оставляет след, даже если его не видно глазу.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/post/update",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"post",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post Delete",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/post/delete/:id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"post",
+								"delete",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "01950df8-b56a-7c8b-82a5-d87bf1628203"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post Get",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/post/get/:id",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"post",
+								"get",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "01950df8-b56a-7c8b-82a5-d87bf1628203"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post Feed",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/post/feed",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"post",
+								"feed"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
 		}
 	]
 }
