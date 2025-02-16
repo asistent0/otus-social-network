@@ -1,0 +1,26 @@
+snc_redis:
+    clients:
+        default:
+            type: predis
+            alias: default
+            dsn: '%env(REDIS_URL)%/0'
+            options:
+                connection_timeout: 10
+                read_write_timeout: 30
+                prefix: "%env(APP_ENV)%:default:"
+        handle:
+            type: predis
+            alias: handle
+            dsn: '%env(REDIS_URL)%/1'
+            options:
+                connection_timeout: 10
+                read_write_timeout: 30
+                prefix: "%env(APP_ENV)%:handle:"
+        post:
+            type: predis
+            alias: post
+            dsn: '%env(REDIS_URL)%/2'
+            options:
+                connection_timeout: 10
+                read_write_timeout: 30
+                prefix: "%env(APP_ENV)%:post:"

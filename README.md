@@ -29,24 +29,63 @@
 После завершения всех предыдущих шагов, вы можете получить доступ к вашему приложению,
 перейдя по следующему URL: http://social-network.local
 
-В приложении доступны 3 урл:
-   - /user/register
-   - /login
-   - /user/get/{id}
-   - /user/search/?first_name=Ек&last_name=Пе
+В приложении доступны урл:
+- /user/register
+- /login
+- /user/get/{id}
+- /user/search/?first_name=Ек&last_name=Пе
 
 Коллекция Postman находится в файле [SocialNetwork.postman_collection.json](SocialNetwork.postman_collection.json)
 
 ## Загрузка пользователей
 
-   ```shell
-   docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug
-   ```
+```shell
+docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug --group=UserFixtures
+```
 
-## Тест производительности и настройки индексов
+# Тест производительности и настройки индексов
 
 В папке JMeter находятся все отчеты и настройки.
 
-## Тест производительности и репликации
+# Тест производительности и репликации
 
 В папке JMeter2 находятся все отчеты и настройки.
+
+## Загрузка постов
+
+```shell
+docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug --group=PostFixtures
+```
+```shell
+docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug --group=FriendFixtures
+```
+
+Добавлены новые доступы. Все доступны через авторизацию:
+- /friend/set/{user_id}
+- /friend/delete/{user_id}
+- /friend/list
+- /post/feed
+- /post/create
+- /post/update
+- /post/get/{id}
+- /post/delete/{id}
+
+Коллекция Postman обновлена.
+
+## Запуск очереди
+
+Запуск очереди можно поставить на супервизорд.
+
+```shell
+docker exec -ti social_network_php php bin/console messenger:consume async -vv
+```
+
+## Перестройка кеша
+
+Команду можно поставить на отработку в ночное время по крону.
+В зависимости от количества пользователей и постов,
+можно оптимизировать на постепенный запуск через супервизорд.
+
+```shell
+docker exec -ti social_network_php php bin/console app:rebuild-feeds -vv
+```

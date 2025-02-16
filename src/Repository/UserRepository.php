@@ -6,6 +6,7 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception as DBALException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -107,5 +108,17 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         }
 
         return $this->serializer->denormalize($data, User::class.'[]');
+    }
+
+    public function getUsersBatch(int $batchSize, int $page): array
+    {
+        $query = $this->createQueryBuilder('u')
+            ->orderBy('u.id', 'ASC')
+            ->setFirstResult(($page - 1) * $batchSize)
+            ->setMaxResults($batchSize)
+            ->getQuery();
+
+        $paginator = new Paginator($query);
+        return iterator_to_array($paginator);
     }
 }

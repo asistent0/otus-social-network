@@ -2,11 +2,15 @@
 
 namespace App\Service\Post;
 
+use App\Controller\Payload\UpdatePostRequest;
 use App\Entity\Post;
 use App\Entity\User;
 use App\Repository\PostRepository;
+use App\Service\FeedCacheService;
+use DateMalformedStringException;
 use Doctrine\DBAL\Exception as DBALException;
 use InvalidArgumentException;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 readonly class PostService
@@ -15,6 +19,7 @@ readonly class PostService
         private ValidatorInterface $validator,
         private PostRepository $postRepository,
         private PostTransform $postTransform,
+        private FeedCacheService $feedCacheService,
     ) {
     }
 
@@ -36,17 +41,41 @@ readonly class PostService
 
         $this->postRepository->save($post);
 
+        $this->feedCacheService->addPostToFriendsFeeds($post->getUser(), $post, true);
+
         return $post;
     }
 
     /**
      * @throws DBALException
+     * @throws ExceptionInterface
      */
-    public function list(int $offset, int $limit): array
+    public function removePost(array $post): void
     {
-        $posts = $this->postRepository->list($offset, $limit);
-        $data = [];
+        $this->feedCacheService->removePostFromFeeds($post);
 
+        $this->postRepository->remove($post['id']);
+    }
+
+    /**
+     * @throws DBALException
+     */
+    public function updatePost(UpdatePostRequest $updatePostRequest): void
+    {
+        $this->postRepository->update($updatePostRequest->id, $updatePostRequest->text);
+        $post = $this->postRepository->findOneById($updatePostRequest->id);
+        $this->feedCacheService->updatePostInFeeds($post);
+    }
+
+    /**
+     * @throws DBALException
+     * @throws DateMalformedStringException
+     */
+    public function list(User $user, int $offset, int $limit): array
+    {
+        $posts = $this->feedCacheService->getFeed($user, $offset, $limit);
+
+        $data = [];
         foreach ($posts as $post) {
             $data[] = $this->postTransform->getInfo($post);
         }

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Post;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception as DBALException;
@@ -81,10 +82,40 @@ class PostRepository extends ServiceEntityRepository
     /**
      * @throws DBALException
      */
-    public function list(int $offset, int $limit): array
+    public function postListFriend(User $user, int $offset, int $limit): array
     {
-        $sql = 'SELECT * FROM "post" ORDER BY id OFFSET :offset LIMIT :limit';
+        $sql = 'SELECT post.*
+                FROM post
+                JOIN friend ON post.user_id = friend.friend_id AND friend.user_id = :user_id
+                ORDER BY post.id DESC
+                OFFSET :offset
+                LIMIT :limit';
         $data = $this->connection->fetchAllAssociative($sql, [
+            'user_id' => $user->getId()->toString(),
+            'offset' => $offset,
+            'limit' => $limit,
+        ]);
+
+        if (!$data) {
+            return [];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @throws DBALException
+     */
+    public function postList(User $user, int $offset, int $limit): array
+    {
+        $sql = 'SELECT *
+                FROM post
+                WHERE user_id = :user_id
+                ORDER BY id DESC
+                OFFSET :offset
+                LIMIT :limit';
+        $data = $this->connection->fetchAllAssociative($sql, [
+            'user_id' => $user->getId()->toString(),
             'offset' => $offset,
             'limit' => $limit,
         ]);

@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Repository\PostRepository;
 use App\Service\Post\PostService;
 use App\Service\Post\PostTransform;
+use DateMalformedStringException;
 use Doctrine\DBAL\Exception as DBALException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
 #[Route('/post', name: 'app_post')]
 final class PostController extends AbstractController
@@ -28,10 +30,14 @@ final class PostController extends AbstractController
 
     /**
      * @throws DBALException
+     * @throws DateMalformedStringException
      */
     #[Route('/feed', name: '_feed', methods: ['GET'])]
     public function feed(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = $this->getUser();
+
         $offset = $request->get('offset', 0);
         $limit = $request->get('limit', 10);
 
@@ -42,7 +48,7 @@ final class PostController extends AbstractController
             $limit = 10;
         }
 
-        $postsData = $this->postService->list($offset, $limit);
+        $postsData = $this->postService->list($user, $offset, $limit);
 
         if (empty($postsData)) {
             return $this->json([]);
@@ -70,7 +76,7 @@ final class PostController extends AbstractController
      * @throws DBALException
      */
     #[Route('/get/{id}', name: '_get', methods: ['GET'])]
-    public function show(string $id): JsonResponse
+    public function get(string $id): JsonResponse
     {
         $post = $this->postRepository->findOneById($id);
         if (!$post) {
@@ -92,13 +98,14 @@ final class PostController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $this->postRepository->update($updatePostRequest->id, $updatePostRequest->text);
+        $this->postService->updatePost($updatePostRequest);
 
         return $this->json('OK');
     }
 
     /**
      * @throws DBALException
+     * @throws ExceptionInterface
      */
     #[Route('/delete/{id}', name: '_delete', methods: ['PUT'])]
     public function delete(string $id): JsonResponse
@@ -108,7 +115,7 @@ final class PostController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $this->postRepository->remove($id);
+        $this->postService->removePost($post);
 
         return $this->json('OK');
     }

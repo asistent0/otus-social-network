@@ -2,22 +2,22 @@
 
 namespace App\Controller;
 
-use App\Entity\Friend;
 use App\Entity\User;
-use App\Repository\FriendRepository;
 use App\Repository\UserRepository;
+use App\Service\Friend\FriendService;
 use App\Service\User\UserService;
 use Doctrine\DBAL\Exception as DBALException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
+use Throwable;
 
 #[Route('/friend', name: 'app_friend')]
 final class FriendController extends AbstractController
 {
     function __construct(
-        private readonly FriendRepository $friendRepository,
+        private readonly FriendService $friendService,
         private readonly UserRepository $userRepository,
     ) {
     }
@@ -49,8 +49,7 @@ final class FriendController extends AbstractController
     }
 
     /**
-     * @throws DBALException
-     * @throws ExceptionInterface
+     * @throws Throwable
      */
     #[Route('/set/{user_id}', name: '_set', methods: ['PUT'])]
     public function set(string $user_id): JsonResponse
@@ -58,24 +57,8 @@ final class FriendController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
         $friend = $this->userRepository->find($user_id);
-        $friends = $this->userRepository->getFriends($user);
 
-        $isExist = false;
-        foreach ($friends as $existFriend) {
-            if ($existFriend->getId()->toString() === $user_id) {
-                $isExist = true;
-                break;
-            }
-        }
-
-        if (!$isExist) {
-            $newFriend = new Friend()
-                ->setUser($user)
-                ->setFriend($friend);
-            $user->addFriend($newFriend);
-            $friend->addFriendedBy($newFriend);
-            $this->friendRepository->save($newFriend);
-        }
+        $this->friendService->addFriend($user, $friend);
 
         return $this->json('OK');
     }
@@ -94,7 +77,7 @@ final class FriendController extends AbstractController
             return $this->json('OK');
         }
 
-        $this->friendRepository->remove($user, $friend);
+        $this->friendService->removeFriend($user, $friend);
 
         return $this->json('OK');
     }

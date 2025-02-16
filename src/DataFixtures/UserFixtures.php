@@ -15,7 +15,9 @@ class UserFixtures extends Fixture
 {
     function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher
-    ) {}
+    ) {
+    }
+
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create('ru_RU');
