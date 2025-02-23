@@ -27,12 +27,12 @@ class Friend
     #[SerializedName('user_id')]
     #[ORM\ManyToOne(inversedBy: 'friends')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
+    private User $user;
 
     #[SerializedName('friend_id')]
     #[ORM\ManyToOne(inversedBy: 'friendedBy')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $friend = null;
+    private User $friend;
 
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
     #[SerializedName('created_at')]

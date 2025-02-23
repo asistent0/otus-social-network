@@ -89,3 +89,15 @@ docker exec -ti social_network_php php bin/console messenger:consume async -vv
 ```shell
 docker exec -ti social_network_php php bin/console app:rebuild-feeds -vv
 ```
+
+## Загрузка диалогов
+
+```shell
+docker exec -ti social_network_php php bin/console doctrine:fixtures:load --append --no-debug --group=DialogFixtures
+```
+
+Добавлены новые доступы. Все доступны через авторизацию:
+- /dialog/{user_id}/send
+- /dialog/{user_id}/list
+
+Коллекция Postman обновлена.

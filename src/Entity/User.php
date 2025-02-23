@@ -81,12 +81,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $posts;
 
+    /**
+     * @var Collection<int, Dialog>
+     */
+    #[ORM\OneToMany(targetEntity: Dialog::class, mappedBy: 'participant1', orphanRemoval: true)]
+    private Collection $dialogsAsParticipant1;
+
+    /**
+     * @var Collection<int, Dialog>
+     */
+    #[ORM\OneToMany(targetEntity: Dialog::class, mappedBy: 'participant2', orphanRemoval: true)]
+    private Collection $dialogsAsParticipant2;
+
+    /**
+     * @var Collection<int, Message>
+     */
+    #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'sender', orphanRemoval: true)]
+    private Collection $messages;
+
     function __construct()
     {
         $this->id = Uuid::v7();
         $this->friends = new ArrayCollection();
         $this->friendedBy = new ArrayCollection();
         $this->posts = new ArrayCollection();
+        $this->dialogsAsParticipant1 = new ArrayCollection();
+        $this->dialogsAsParticipant2 = new ArrayCollection();
+        $this->messages = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -314,12 +335,92 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removePost(Post $post): static
     {
-        if ($this->posts->removeElement($post)) {
-            // set the owning side to null (unless already changed)
-            if ($post->getUser() === $this) {
-                $post->setUser(null);
-            }
+        $this->posts->removeElement($post);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Dialog>
+     */
+    public function getDialogsAsParticipant1(): Collection
+    {
+        return $this->dialogsAsParticipant1;
+    }
+
+    public function addDialogsAsParticipant1(Dialog $dialogsAsParticipant1): static
+    {
+        if (!$this->dialogsAsParticipant1->contains($dialogsAsParticipant1)) {
+            $this->dialogsAsParticipant1->add($dialogsAsParticipant1);
+            $dialogsAsParticipant1->setParticipant1($this);
         }
+
+        return $this;
+    }
+
+    public function removeDialogsAsParticipant1(Dialog $dialogsAsParticipant1): static
+    {
+        $this->dialogsAsParticipant1->removeElement($dialogsAsParticipant1);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Dialog>
+     */
+    public function getDialogsAsParticipant2(): Collection
+    {
+        return $this->dialogsAsParticipant2;
+    }
+
+    public function addDialogsAsParticipant2(Dialog $dialogsAsParticipant2): static
+    {
+        if (!$this->dialogsAsParticipant2->contains($dialogsAsParticipant2)) {
+            $this->dialogsAsParticipant2->add($dialogsAsParticipant2);
+            $dialogsAsParticipant2->setParticipant2($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDialogsAsParticipant2(Dialog $dialogsAsParticipant2): static
+    {
+        $this->dialogsAsParticipant2->removeElement($dialogsAsParticipant2);
+
+        return $this;
+    }
+
+    public function getDialogs(): Collection
+    {
+        return new ArrayCollection(
+            array_merge(
+                $this->dialogsAsParticipant1->toArray(),
+                $this->dialogsAsParticipant2->toArray()
+            )
+        );
+    }
+
+    /**
+     * @return Collection<int, Message>
+     */
+    public function getMessages(): Collection
+    {
+        return $this->messages;
+    }
+
+    public function addMessage(Message $message): static
+    {
+        if (!$this->messages->contains($message)) {
+            $this->messages->add($message);
+            $message->setSender($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMessage(Message $message): static
+    {
+        $this->messages->removeElement($message);
 
         return $this;
     }

@@ -25,11 +25,11 @@ class Post
     #[SerializedName('user_id')]
     #[ORM\ManyToOne(inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
+    private User $user;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
-    private ?string $text = null;
+    private string $text;
 
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
     #[SerializedName('created_at')]
@@ -54,19 +54,19 @@ class Post
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUser(): User
     {
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(User $user): static
     {
         $this->user = $user;
 
         return $this;
     }
 
-    public function getText(): ?string
+    public function getText(): string
     {
         return $this->text;
     }
