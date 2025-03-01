@@ -101,3 +101,76 @@ docker exec -ti social_network_php php bin/console doctrine:fixtures:load --appe
 - /dialog/{user_id}/list
 
 Коллекция Postman обновлена.
+
+## Шардирование
+
+Сделал бекап старой базы. Остановил старую базу и поднял новую базу через Citus.
+
+### Подключение к координатору
+
+```shell
+docker exec -it citus_coordinator psql -U postgres -d social_network
+```
+
+### Определение координатора и добавление нод:
+
+```postgresql
+SELECT citus_set_coordinator_host('citus-coordinator', 5432);
+SELECT * FROM citus_add_node('citus-worker1', 5432);
+SELECT * FROM citus_add_node('citus-worker2', 5432);
+```
+
+### Восстановление БД
+
+Восстанавливаем бекап в новой базе.
+
+Выполняем миграции.
+
+Было сделано шардирование с колокацией таблиц `dialog` и `message`.
+Для обеих таблиц выбран ключ шардирования: `participant1_id` (ID инициатора диалога).
+Потому что большинство запросов фильтруются по участнику диалога.
+Гарантирует колокацию связанных данных (диалоги и сообщения хранятся на одних шардах).
+
+## Проведение решардинга
+
+### Добавление новых нод
+
+```postgresql
+SELECT citus_add_node('new-worker-1', 5432);
+SELECT citus_add_node('new-worker-2', 5432);
+```
+
+### Запуск решардинга
+
+```postgresql
+SELECT citus_rebalance_start(
+    shard_transfer_mode := 'block_writes',
+    max_shard_moves := 100,
+    excluded_shard_list := '{}'
+);
+```
+
+### Мониторинг
+
+```postgresql
+-- Статус ребалансировки
+SELECT * FROM citus_rebalance_status();
+
+-- Прогресс перемещения шардов
+SELECT 
+    shard_id, 
+    source_node_name, 
+    target_node_name, 
+    progress 
+FROM citus_shard_moves;
+```
+
+### Откат (при необходимости)
+
+```postgresql
+-- Отмена перемещения шардов
+SELECT citus_rebalance_stop();
+
+-- Возврат к предыдущей конфигурации
+SELECT undo_rebalance();
+```

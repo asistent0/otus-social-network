@@ -24,11 +24,11 @@ class MessageRepository extends ServiceEntityRepository
     /**
      * @throws DBALException
      */
-    public function save(Message $message, int $dialogId): void
+    public function save(Message $message, int $dialogId, string $participant1Id): void
     {
         $sql = '
-            INSERT INTO "message" (dialog_id, sender_id, text, created_at)
-            VALUES (:dialog_id, :sender_id, :text, :created_at) RETURNING id
+            INSERT INTO "message" (dialog_id, sender_id, text, created_at, participant1_id)
+            VALUES (:dialog_id, :sender_id, :text, :created_at, :participant1_id) RETURNING id
         ';
 
         $array = [
@@ -36,6 +36,7 @@ class MessageRepository extends ServiceEntityRepository
             'sender_id' => $message->getSender()->getId(),
             'text' => $message->getText(),
             'created_at' => $message->getCreatedAt()->format('Y-m-d H:i:s'),
+            'participant1_id' => $participant1Id,
         ];
         $this->connection->executeStatement($sql, $array);
     }
@@ -48,9 +49,14 @@ class MessageRepository extends ServiceEntityRepository
         $minId = min($user1->getId(), $user2->getId());
         $maxId = max($user1->getId(), $user2->getId());
 
-        $sql = 'SELECT "message".* FROM "message" JOIN "dialog" ON "dialog"."id" = "message"."dialog_id"
-         AND "dialog"."participant1_id" = :minId AND "dialog"."participant2_id" = :maxId
-         ORDER BY "message"."created_at" DESC';
+        $sql = 'SELECT m.* 
+            FROM "message" m
+            JOIN "dialog" d 
+              ON m.dialog_id = d.id AND m.participant1_id = d.participant1_id
+            WHERE d.participant1_id = :minId AND d.participant2_id = :maxId
+            ORDER BY m.created_at DESC
+            LIMIT 100';
+
         $data = $this->connection->fetchAllAssociative($sql, ['minId' => $minId, 'maxId' => $maxId]);
 
         if (!$data) {

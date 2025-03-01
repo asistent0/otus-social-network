@@ -29,7 +29,6 @@ class DialogRepository extends ServiceEntityRepository
         $minId = min($user1->getId(), $user2->getId());
         $maxId = max($user1->getId(), $user2->getId());
 
-
         $sql = 'SELECT * FROM "dialog" WHERE "participant1_id" = :minId AND "participant2_id" = :maxId';
         $data = $this->connection->fetchAssociative($sql, ['minId' => $minId, 'maxId' => $maxId]);
 

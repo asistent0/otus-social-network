@@ -12,7 +12,7 @@ services:
     networks:
       - app-network
     depends_on:
-      - citus-coordinator
+      - postgres-master
       - redis
 
   # Nginx
@@ -40,63 +40,74 @@ services:
     networks:
       - app-network
 
-  # Citus Coordinator
-  citus-coordinator:
-    image: citusdata/citus:13-pg16
-    container_name: social_network_citus_coordinator
+  # База данных (PostgreSQL)
+  postgres-master:
+    image: postgres:17
+    container_name: social_network_postgres-master
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      citus.use_secondary_nodes: always
     healthcheck:
       test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
-      interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 60s
     volumes:
-      - ./docker/citus/coordinator:/var/lib/postgresql/data
+      - ./docker/postgres-master/data:/var/lib/postgresql/data
+      - ./docker/postgres-master/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     ports:
       - "5434:5432"
     networks:
       - app-network
 
-  # Citus Worker 1
-  citus-worker1:
-    image: citusdata/citus:13-pg16
-    container_name: social_network_citus_worker1
+  # База данных (PostgreSQL)
+  postgres-slave1:
+    image: postgres:17
+    container_name: social_network_postgres-slave1
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     volumes:
-      - ./docker/citus/worker1:/var/lib/postgresql/data
+      - ./docker/postgres-slave1/data:/var/lib/postgresql/data
+      - ./docker/postgres-slave1/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     ports:
       - "5435:5432"
     networks:
       - app-network
     depends_on:
-      - citus-coordinator
+      postgres-master:
+        condition: service_healthy
 
-  # Citus Worker 2
-  citus-worker2:
-    image: citusdata/citus:13-pg16
-    container_name: social_network_citus_worker2
+  # База данных (PostgreSQL)
+  postgres-slave2:
+    image: postgres:17
+    container_name: social_network_postgres-slave2
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     volumes:
-      - ./docker/citus/worker2:/var/lib/postgresql/data
+      - ./docker/postgres-slave2/data:/var/lib/postgresql/data
+      - ./docker/postgres-slave2/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     ports:
       - "5436:5432"
     networks:
       - app-network
     depends_on:
-      - citus-coordinator
+      postgres-master:
+        condition: service_healthy
 
 # Сеть для соединения контейнеров
 networks:

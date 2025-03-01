@@ -1,18 +1,8 @@
 doctrine:
     dbal:
-        default_connection: default
-        connections:
-            default:
-                url: '%env(resolve:DATABASE_URL)%'
-                profiling_collect_backtrace: '%kernel.debug%'
-                use_savepoints: true
-                driver: 'pdo_pgsql'
-                server_version: 17
-                replicas:
-                    slave1:
-                        url: '%env(resolve:DATABASE_URL_SLAVE1)%'
-                    slave2:
-                        url: '%env(resolve:DATABASE_URL_SLAVE2)%'
+        url: '%env(resolve:DATABASE_URL)%'
+        profiling_collect_backtrace: '%kernel.debug%'
+        use_savepoints: true
 
     orm:
         auto_generate_proxy_classes: true

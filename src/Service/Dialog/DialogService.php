@@ -39,7 +39,7 @@ readonly class DialogService
         $message = new Message()
             ->setText($text)
             ->setSender($user);
-        $this->messageRepository->save($message, $dialogData['id']);
+        $this->messageRepository->save($message, $dialogData['id'], $dialogData['participant1_id']);
     }
 
     /**

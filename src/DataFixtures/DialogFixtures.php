@@ -25,16 +25,18 @@ class DialogFixtures extends Fixture
         $faker = Factory::create('ru_RU');
         $userRepository = $manager->getRepository(User::class);
         $batchSize = 1000;
+        $offset = 0;
         $totalUsers = $userRepository->createQueryBuilder('u')
             ->select('COUNT(u.id)')
             ->getQuery()
             ->getSingleScalarResult();
 
-        for ($offset = 1; $offset < $totalUsers - 1; $offset += $batchSize) {
+        for (; $offset < $totalUsers; $offset += $batchSize) {
             /** @var User[] $users */
             $users = $userRepository->createQueryBuilder('u')
                 ->setFirstResult($offset)
                 ->setMaxResults($batchSize)
+                ->orderBy('u.id', 'ASC')
                 ->getQuery()
                 ->getResult();
 

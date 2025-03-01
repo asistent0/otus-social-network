@@ -10,17 +10,18 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ORM\Entity(repositoryClass: DialogRepository::class)]
 #[ORM\UniqueConstraint(name: 'dialog_participants_unique_idx', columns: ['participant1_id', 'participant2_id'])]
+#[ORM\Table(options: ['sharding_key' => 'participant1_id'])]
 class Dialog
 {
     #[SerializedName('id')]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'bigint')]
     private ?int $id = null;
 
     #[SerializedName('participant1_id')]
     #[ORM\ManyToOne(inversedBy: 'dialogsAsParticipant1')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, columnDefinition: "INT AUTO_INCREMENT")]
     private User $participant1;
 
     #[SerializedName('participant2_id')]

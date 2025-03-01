@@ -6,28 +6,45 @@ use App\Repository\MessageRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Attribute\SerializedName;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
+#[ORM\Index('idx_message_dialog_composite', ['dialog_id', 'participant1_id'])]
+#[ORM\Table(options: ['sharding_key' => 'participant1_id'])]
 class Message
 {
+    #[SerializedName('id')]
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[ORM\Column(type: 'bigint')]
     private ?int $id = null;
 
+    #[SerializedName('dialog_id')]
     #[ORM\ManyToOne(inversedBy: 'messages')]
     #[ORM\JoinColumn(nullable: false)]
     private Dialog $dialog;
 
+    #[SerializedName('sender_id')]
     #[ORM\ManyToOne(inversedBy: 'messages')]
     #[ORM\JoinColumn(nullable: false)]
     private User $sender;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
     private string $text;
 
-    #[ORM\Column]
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
+    #[SerializedName('created_at')]
+    #[ORM\Column(name: 'created_at')]
     private DateTimeImmutable $createdAt;
+
+    #[SerializedName('participant1_id')]
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private User $participant1;
 
     public function __construct()
     {
@@ -47,6 +64,18 @@ class Message
     public function setDialog(Dialog $dialog): static
     {
         $this->dialog = $dialog;
+
+        return $this;
+    }
+
+    public function getParticipant1(): User
+    {
+        return $this->participant1;
+    }
+
+    public function setParticipant1(User $participant1): static
+    {
+        $this->participant1 = $participant1;
 
         return $this;
     }

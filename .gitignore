@@ -1,5 +1,6 @@
 .git
 .idea
+/docker/citus/
 /docker/postgres-master/data/
 /docker/postgres-slave1/data/
 /docker/postgres-slave2/data/
