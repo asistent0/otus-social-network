@@ -1,0 +1,34 @@
+{
+    http_port 80
+    auto_https off
+}
+
+:80 {
+    log {
+        output stdout
+        level DEBUG
+    }
+
+    # WebSocket endpoint
+    handle_path /_/ws/* {
+        mercure {
+            publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY} HS256
+            subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} HS256
+            cors_origins *
+            publish_origins *
+            anonymous
+            transport_ws
+        }
+    }
+
+    # HTTP endpoint
+    handle /.well-known/mercure* {
+        mercure {
+            publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY} HS256
+            subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} HS256
+            cors_origins *
+            publish_origins *
+            anonymous
+        }
+    }
+}

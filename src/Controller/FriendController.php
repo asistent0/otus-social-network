@@ -3,12 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Message\FriendshipConfirmedMessage;
 use App\Repository\UserRepository;
 use App\Service\Friend\FriendService;
 use App\Service\User\UserService;
 use Doctrine\DBAL\Exception as DBALException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Throwable;
@@ -52,13 +54,20 @@ final class FriendController extends AbstractController
      * @throws Throwable
      */
     #[Route('/set/{user_id}', name: '_set', methods: ['PUT'])]
-    public function set(string $user_id): JsonResponse
-    {
+    public function set(
+        string $user_id,
+        MessageBusInterface $bus
+    ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
         $friend = $this->userRepository->find($user_id);
 
         $this->friendService->addFriend($user, $friend);
+
+        $bus->dispatch(new FriendshipConfirmedMessage(
+            $user->getId(),
+            $friend->getId()
+        ));
 
         return $this->json('OK');
     }

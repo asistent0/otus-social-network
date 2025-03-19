@@ -12,6 +12,13 @@
         {% endblock %}
     </head>
     <body>
+    <script>
+        const eventSource = new EventSource("{{ mercure('/post/feed/posted')|escape('js') }}");
+        eventSource.onmessage = event => {
+            // Будет вызываться каждый раз, когда сервер что-либо публикует
+            console.log(JSON.parse(event.data));
+        }
+    </script>
         {% block body %}{% endblock %}
     </body>
 </html>

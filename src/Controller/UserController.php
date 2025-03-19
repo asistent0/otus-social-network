@@ -9,6 +9,7 @@ use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
@@ -17,6 +18,12 @@ final class UserController extends AbstractController
     function __construct(
         private readonly UserService $userService,
     ) {
+    }
+
+    #[Route('/', name: 'home', methods: ['GET'])]
+    public function home(): Response
+    {
+        return $this->render('base.html.twig');
     }
 
     /**

@@ -2,5 +2,19 @@ framework:
     messenger:
         transports:
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
-        routing:
-#            'App\Message\AddToFeedMessage': async
+            new_post:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: new_post
+                        type: direct
+                    queues:
+                        new_post: ~
+            friendship:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: friendships_exchange
+                        type: direct
+                    queues:
+                        friendship: ~

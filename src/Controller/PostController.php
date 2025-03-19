@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Controller\Payload\CreatePostRequest;
 use App\Controller\Payload\UpdatePostRequest;
 use App\Entity\User;
+use App\Message\NewPostMessage;
 use App\Repository\PostRepository;
 use App\Service\Post\PostService;
 use App\Service\Post\PostTransform;
@@ -15,6 +16,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Mercure\HubInterface;
+use Symfony\Component\Mercure\Update;
+use Symfony\Component\Messenger\Exception\ExceptionInterface as ExceptionInterfaceAlias;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
@@ -58,16 +63,36 @@ final class PostController extends AbstractController
     }
 
     /**
-     * @throws DBALException
+     * @throws DBALException|ExceptionInterfaceAlias
      */
     #[Route('/create', name: '_create', methods: ['POST'])]
     public function create(
         #[MapRequestPayload] CreatePostRequest $createPostRequest,
+        MessageBusInterface $bus,
+        HubInterface $hub,
     ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
         $post = $this->postService->createPost($user, $createPostRequest->text);
+
+        $bus->dispatch(new NewPostMessage(
+            $post->getId(),
+            $post->getUser()->getId(),
+            $post->getCreatedAt()
+        ));
+
+        $update = new Update(
+            '/post/feed/posted',
+            json_encode(['post' => [
+                'id' => $post->getId(),
+                'text' => $post->getText(),
+                'createdAt' => $post->getCreatedAt()->format('Y-m-d H:i:s'),
+                'userId' => $post->getUser()->getId()->toString(),
+            ]])
+        );
+
+        $hub->publish($update);
 
         return $this->json(['id' =>  $post->getId()], Response::HTTP_CREATED);
     }

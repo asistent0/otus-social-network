@@ -4,16 +4,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: backend
     container_name: social_network_php
     ports:
       - "9000:9000"
     volumes:
       - .:/var/www
-    networks:
-      - app-network
     depends_on:
       - citus-coordinator
       - redis
+      - rabbitmq
 
   # Nginx
   nginx:
@@ -26,8 +26,6 @@ services:
       - .:/var/www
     depends_on:
       - php
-    networks:
-      - app-network
 
   # Redis
   redis:
@@ -37,8 +35,59 @@ services:
       - ./docker/redis/data:/data
     ports:
       - "6379:6379"
-    networks:
-      - app-network
+
+  supervisord:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: supervisord
+    container_name: social_network_supervisord
+    user: www-data:www-data
+    volumes:
+      - .:/var/www
+    depends_on:
+      - citus-coordinator
+      - redis
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3.10.5-management
+    container_name: social_network_rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=$RABBITMQ_USER
+      - RABBITMQ_DEFAULT_PASS=$RABBITMQ_PASS
+
+  ###> symfony/mercure-bundle ###
+  mercure:
+    image: dunglas/mercure
+    container_name: social_network_mercure
+    restart: unless-stopped
+    environment:
+      # Uncomment the following line to disable HTTPS,
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET}
+      # Set the URL of your Symfony project (without trailing slash!) as value of the cors_origins directive
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins *
+        anonymous
+    # Comment the following line to disable the development mode
+    command: /usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - ./docker/mercure/Caddyfile:/etc/caddy/Caddyfile
+      - mercure_data:/data
+      - mercure_config:/config
+  ###< symfony/mercure-bundle ###
 
   # Citus Coordinator
   citus-coordinator:
@@ -59,8 +108,6 @@ services:
       - ./docker/citus/coordinator:/var/lib/postgresql/data
     ports:
       - "5434:5432"
-    networks:
-      - app-network
 
   # Citus Worker 1
   citus-worker1:
@@ -75,8 +122,6 @@ services:
       - ./docker/citus/worker1:/var/lib/postgresql/data
     ports:
       - "5435:5432"
-    networks:
-      - app-network
     depends_on:
       - citus-coordinator
 
@@ -93,12 +138,11 @@ services:
       - ./docker/citus/worker2:/var/lib/postgresql/data
     ports:
       - "5436:5432"
-    networks:
-      - app-network
     depends_on:
       - citus-coordinator
 
-# Сеть для соединения контейнеров
-networks:
-  app-network:
-    driver: bridge
+volumes:
+###> symfony/mercure-bundle ###
+  mercure_data:
+  mercure_config:
+###< symfony/mercure-bundle ###

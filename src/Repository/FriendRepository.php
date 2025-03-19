@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<Friend>
@@ -15,9 +16,10 @@ use Doctrine\Persistence\ManagerRegistry;
 class FriendRepository extends ServiceEntityRepository
 {
     public function __construct(
-        ManagerRegistry $registry,
+        ManagerRegistry             $registry,
         private readonly Connection $connection,
-    ) {
+    )
+    {
         parent::__construct($registry, Friend::class);
     }
 
@@ -39,5 +41,27 @@ class FriendRepository extends ServiceEntityRepository
             'user_id' => $user->getId(),
             'friend_id' => $friend->getId(),
         ]);
+    }
+
+    /**
+     * @throws DBALException
+     */
+    public function findFriendIds(Uuid $userId): array
+    {
+        $sql = 'SELECT *
+                FROM friend
+                WHERE user_id = :user_id
+                ORDER BY id DESC
+                OFFSET :offset
+                LIMIT :limit';
+        $data = $this->connection->fetchAllAssociative($sql, [
+            'user_id' => $userId->toString(),
+        ]);
+
+        if (!$data) {
+            return [];
+        }
+
+        return $data;
     }
 }

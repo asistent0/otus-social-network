@@ -174,3 +174,44 @@ SELECT citus_rebalance_stop();
 -- Возврат к предыдущей конфигурации
 SELECT undo_rebalance();
 ```
+
+# Добавление вебсокетов и очередей
+
+## Клиентская подписка на вебсокеты
+
+```js
+const eventSource = new EventSource('/.well-known/mercure?topic=' + 
+  encodeURIComponent('/post/feed/posted'));
+eventSource.onmessage = e => {
+    const post = JSON.parse(e.data);
+    prependPostToFeed(post);
+};
+```
+
+Или через консоль
+
+```shell
+curl -v -N http://social-network.local:3000/.well-known/mercure?topic=/post/feed/posted
+```
+
+## Отправка сообщения в вебсокеты
+
+Можно отправить сообщение по адресу `/post/create`, или для примера можно отправить через консоль
+
+```shell
+$ curl -X POST http://social-network.local:3000/.well-known/mercure -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXJjdXJlIjp7InB1Ymxpc2giOlsiKiJdLCJzdWJzY3JpYmUiOlsiKiJdfX0.sHiaDWs_SoR0wLy2TaEZwQFmZLH-tOBpEMePyPDusao" -d "topic=/post/feed/posted&data=TEST"
+```
+
+## Очереди
+
+Добавлены очереди для добавления новых постов в отдельную таблицу для друзей и для добавления новых друзей.
+
+Добавлен supervisord для отслеживания очередей.
+
+Добавлена таблица со связью постов для друзей.
+
+При добавлении новых друзей, отправляется сообщение в очередь
+для формирования новых связей постов с друзьями.
+
+При добавлении новых потов, отправляется сообщение в очередь
+для добавления этого постав всем друзьям.
