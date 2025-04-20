@@ -14,6 +14,7 @@ services:
       - citus-coordinator
       - redis
       - haproxy
+      - tarantool
 
   # Nginx
   nginx:
@@ -49,6 +50,22 @@ services:
       - citus-coordinator
       - redis
       - haproxy
+      - tarantool
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    container_name: social_network_cron
+    volumes:
+      - .:/var/www
+    depends_on:
+      - citus-coordinator
+      - redis
+      - haproxy
+      - tarantool
+    entrypoint: ["/var/www/bin/install.crontab.run.cron.sh", "/var/www/docker/cron/crontab"]
 
   rabbitmq1:
     image: rabbitmq:3.10.5-management
@@ -56,11 +73,12 @@ services:
     hostname: rabbitmq1
     environment:
       - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
-      - RABBITMQ_DEFAULT_USER=${$RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${$RABBITMQ_DEFAULT_PASS}
-      - RABBITMQ_DEFAULT_VHOST=${$RABBITMQ_DEFAULT_VHOST}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
     volumes:
       - ./docker/rabbitmq/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
+      - ./docker/rabbitmq/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie
       - rabbitmq1-data:/var/lib/rabbitmq/
       - rabbitmq1-logs:/var/log/rabbitmq
     entrypoint: /usr/local/bin/cluster-entrypoint.sh
@@ -81,6 +99,7 @@ services:
       - JOIN_CLUSTER_HOST=rabbitmq1
     volumes:
       - ./docker/rabbitmq/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
+      - ./docker/rabbitmq/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie
       - rabbitmq2-data:/var/lib/rabbitmq/
       - rabbitmq2-logs:/var/log/rabbitmq
     entrypoint: /usr/local/bin/cluster-entrypoint.sh
@@ -101,6 +120,7 @@ services:
       - JOIN_CLUSTER_HOST=rabbitmq1
     volumes:
       - ./docker/rabbitmq/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
+      - ./docker/rabbitmq/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie
       - rabbitmq3-data:/var/lib/rabbitmq/
       - rabbitmq3-logs:/var/log/rabbitmq
     entrypoint: /usr/local/bin/cluster-entrypoint.sh
@@ -154,6 +174,8 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PG_PASSFILE: /var/lib/postgresql/.pgpass
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       citus.use_secondary_nodes: always
@@ -164,6 +186,7 @@ services:
       retries: 5
     volumes:
       - ./docker/citus/coordinator:/var/lib/postgresql/data
+      - ./docker/citus/.pgpass:/var/lib/postgresql/.pgpass
     ports:
       - "5434:5432"
 
@@ -176,8 +199,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      PG_PASSFILE: /var/lib/postgresql/.pgpass
     volumes:
       - ./docker/citus/worker1:/var/lib/postgresql/data
+      - ./docker/citus/.pgpass:/var/lib/postgresql/.pgpass
     ports:
       - "5435:5432"
     depends_on:
@@ -192,12 +217,23 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      PG_PASSFILE: /var/lib/postgresql/.pgpass
     volumes:
       - ./docker/citus/worker2:/var/lib/postgresql/data
+      - ./docker/citus/.pgpass:/var/lib/postgresql/.pgpass
     ports:
       - "5436:5432"
     depends_on:
       - citus-coordinator
+
+  tarantool:
+    image: tarantool/tarantool:latest
+    container_name: social_network_tarantool
+    ports:
+      - "3301:3301"
+    volumes:
+      - ./docker/tarantool:/opt/tarantool
+    command: tarantool /opt/tarantool/init.lua
 
 volumes:
   mercure_data:

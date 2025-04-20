@@ -8,6 +8,8 @@ use App\Entity\User;
 use App\Repository\DialogRepository;
 use App\Repository\MessageRepository;
 use Doctrine\DBAL\Exception as DBALException;
+use Exception;
+use Tarantool\Client\Client;
 
 readonly class DialogService
 {
@@ -15,6 +17,7 @@ readonly class DialogService
         private DialogTransform $dialogTransform,
         private DialogRepository $dialogRepository,
         private MessageRepository $messageRepository,
+        private Client $tarantool,
     ) {
     }
 
@@ -25,7 +28,7 @@ readonly class DialogService
         User $user,
         User $friend,
         string $text,
-    ): void {
+    ): bool {
         $dialog = $this->dialogRepository->findDialogBetweenUsers($user, $friend);
 
         if (!$dialog) {
@@ -39,7 +42,26 @@ readonly class DialogService
         $message = new Message()
             ->setText($text)
             ->setSender($user);
-        $this->messageRepository->save($message, $dialogData['id'], $dialogData['participant1_id']);
+        $messageId = $this->messageRepository->save($message, $dialogData['id'], $dialogData['participant1_id']);
+
+        try {
+            $result = $this->tarantool->call(
+                'send_message',
+                $messageId,
+                $dialogData['id'],
+                $user->getId()->toString(),
+                $friend->getId()->toString(),
+                $text,
+            );
+
+            if (!empty($result)) {
+                $result = $result[0];
+            }
+
+            return $result['success'];
+        } catch (Exception) {
+            return false;
+        }
     }
 
     /**
@@ -47,7 +69,16 @@ readonly class DialogService
      */
     public function list(User $user, User $friend): array
     {
-        $messages = $this->messageRepository->findMessagesBetweenUsers($user, $friend);
+        $dialog = $this->dialogRepository->findDialogBetweenUsers($user, $friend);
+
+        try {
+            $messages = $this->tarantool->call('list_messages', $dialog['id']);
+        } catch (Exception) {
+            return [];
+        }
+        if (!empty($messages)) {
+            $messages = $messages[0];
+        }
 
         $data = [];
         foreach ($messages as $message) {

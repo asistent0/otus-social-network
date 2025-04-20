@@ -24,7 +24,7 @@ class MessageRepository extends ServiceEntityRepository
     /**
      * @throws DBALException
      */
-    public function save(Message $message, int $dialogId, string $participant1Id): void
+    public function save(Message $message, int $dialogId, string $participant1Id): int
     {
         $sql = '
             INSERT INTO "message" (dialog_id, sender_id, text, created_at, participant1_id)
@@ -38,7 +38,8 @@ class MessageRepository extends ServiceEntityRepository
             'created_at' => $message->getCreatedAt()->format('Y-m-d H:i:s'),
             'participant1_id' => $participant1Id,
         ];
-        $this->connection->executeStatement($sql, $array);
+
+        return $this->connection->fetchOne($sql, $array);
     }
 
     /**

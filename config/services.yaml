@@ -24,3 +24,19 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    Tarantool\Client\Connection\StreamConnection:
+        factory: ['Tarantool\Client\Connection\StreamConnection', 'createTcp']
+        arguments: ['%env(TARANTOOL_URL)%']
+
+    Tarantool\Client\Packer\Packer:
+        factory: ['Tarantool\Client\Packer\PurePacker', 'fromAvailableExtensions']
+
+    Tarantool\Client\Handler\DefaultHandler:
+        arguments:
+            - '@Tarantool\Client\Connection\StreamConnection'
+            - '@Tarantool\Client\Packer\Packer'
+
+    Tarantool\Client\Client:
+        arguments:
+            - '@Tarantool\Client\Handler\DefaultHandler'

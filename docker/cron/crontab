@@ -1,0 +1,2 @@
+# Removes messages exceeding the limit of 100 per dialog in Tarantool
+0 * * * * /usr/local/bin/php /var/www/bin/console app:cleanup-tarantool-messages -vv >> /var/www/var/log/cron.cleanup-tarantool-messages.log
